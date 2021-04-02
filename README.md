@@ -22,7 +22,7 @@ For each time step it iterates across all nodes and does a temporal integral fro
 
 ### TAWSS
 
-<a href="url"><img src="https://github.com/DThornz/TAWSS-and-OSI-Calculator/blob/main/TAWSS_Eq.jpg" align="center" height="171" width="659" ></a>
+<a href="url"><img src="https://github.com/DThornz/TAWSS-and-OSI-Calculator/blob/main/TAWSS_Eq.jpg" align="center" height="213" width="539" ></a>
 
 ### OSI
 
