@@ -58,7 +58,22 @@ end
 
 %% Load Data
 % Access folder with data
-selected_files=uipickfiles;
+try
+    selected_files=uipickfiles;
+catch
+    folder=uigetdir;
+    files_in_folder=dir(fullfile(folder, '*.*'));
+%     selected_files=cell(length(files_in_folder),1);
+    for ii=1:length(files_in_folder)
+        if files_in_folder(ii).bytes<1
+            data_to_remove(ii)=ii;
+        else
+            temp=[files_in_folder(ii).folder '\' files_in_folder(ii).name];
+            selected_files{ii,1}=temp;
+        end
+    end
+    selected_files(data_to_remove,:)=[];
+end
 % Sort files just in case
 selected_files=sort(selected_files);
 % Check if any files are selected
@@ -69,12 +84,12 @@ end
 num_files=length(selected_files);
 % Do a check if the length of the time vector matches the number of files
 if tend/dt~=num_files
-    error('Number of time steps doesn''t match number of files. Check again.')
+    fprintf('Number of time steps doesn''t match number of files. \nCode might not work properly. Check again.\n')
 end
 % Separate counter for loop later
 time_point_counter=1;
 % Initial read of a file to figure out preallocation values needed
-temp=importdata(selected_files{1});
+temp=importdata(selected_files{5});
 temp=temp.data;
 [node_num, var_num]=size(temp);
 data=zeros(node_num,var_num,num_files);
