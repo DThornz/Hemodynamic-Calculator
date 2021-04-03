@@ -63,7 +63,6 @@ try
 catch
     folder=uigetdir;
     files_in_folder=dir(fullfile(folder, '*.*'));
-%     selected_files=cell(length(files_in_folder),1);
     for ii=1:length(files_in_folder)
         if files_in_folder(ii).bytes<1
             data_to_remove(ii)=ii;
@@ -84,7 +83,7 @@ end
 num_files=length(selected_files);
 % Do a check if the length of the time vector matches the number of files
 if tend/dt~=num_files
-    fprintf('Number of time steps doesn''t match number of files. \nCode might not work properly. Check again.\n')
+    error('Number of time steps doesn''t match number of files. Check again.\n')
 end
 % Separate counter for loop later
 time_point_counter=1;
