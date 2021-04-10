@@ -4,7 +4,7 @@
     CV-PEUTICS Laboratory, https://cvpeutics.fiu.edu/
     4/01/2021
     
-    Code to import Fluent ASCII data and calculate the TAWSS and OSI.
+    Code to import Fluent ASCII data and calculate TAWSS, OSI, RRT, and transWSS.
     
     Assumes that each time point file is formatted as such:
     Row: Nodes
@@ -39,23 +39,29 @@ dt=str2double(answer{3}); % Time step used in simulation, example is 0.00625 s
 Tc=str2double(answer{4}); % Cycle period used in simulation, in seconds
 
 % Set plotting parameters
-% If both are set to true then a subplot is used
-answer = questdlg('What would you like to plot?', ...
-	'Plotting Parameters', ...
-	'TAWSS','OSI','TAWSS and OSI','TAWSS and OSI');
+list = {'TAWSS','OSI','RRT',...                   
+'transWSS'};
+[indx,tf] = listdlg('Name','Plotting Parameters','PromptString',{'What would you like to plot?','Hold CTRL/Command for multi-select'},'ListString',list,'ListSize',[200 100]);
 % Handle responses
-switch answer
-    case 'TAWSS'
-        TAWSS_plot=true;
-        OSI_plot=false;
-    case 'OSI'
-        TAWSS_plot=false;
-        OSI_plot=true;
-    case 'TAWSS and OSI'
-        TAWSS_plot=true;
-        OSI_plot=true;
+TAWSS_plot=false;
+OSI_plot=false;
+RRT_plot=false;
+transWSS_plot=false;
+if isempty(indx)
+    warndlg('No data selected for plotting, values will still be calculated but not shown.','Warning');
+else
+    for ii=1:length(indx)
+        if indx(ii)==1
+            TAWSS_plot=true;
+        elseif indx(ii)==2
+            OSI_plot=true;
+        elseif indx(ii)==3
+            RRT_plot=true;
+        else 
+            transWSS_plot=true;
+        end
+    end
 end
-
 %% Load Data
 % Access folder with data
 try
@@ -161,7 +167,6 @@ for jj=1:node_num % All nodes
     % Reset counter for next node
     time_point_counter=1;
 end
-% delete(f)
 %% Plotting TAWSS
 % Assuming locations are in m, multiple by 1000 to convert to mm
 X=1000*data(:,2,1);
@@ -172,8 +177,8 @@ C=TAWSS*10;
 
 if TAWSS_plot
     % Plot using scatter3
-    if TAWSS_plot==OSI_plot
-        subplot(1,2,1)
+    if length(indx)>1
+        subplot(1,length(indx),1)
     end
     scatter3(X,Y,Z,20,C,'filled')
     colormap(jet(1024));
@@ -212,8 +217,8 @@ C=OSI;
 
 if OSI_plot
     % Plot using scatter3
-    if TAWSS_plot==OSI_plot
-        subplot(1,2,2)
+    if length(indx)>1
+        subplot(1,length(indx),2)
     end
     scatter3(X,Y,Z,20,C,'filled')
     
