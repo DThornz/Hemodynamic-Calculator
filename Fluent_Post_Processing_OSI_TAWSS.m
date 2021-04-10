@@ -145,9 +145,9 @@ for jj=1:node_num % All nodes
         end
         
     end
-    % Calcualte TAWSS using the trapz function to approximate the integral
+    % Calculate TAWSS using the trapz function to approximate the integral
     TAWSS(jj)=(1/Tc)*trapz(t,TAWSS_Mag);
-    % Calcualte OSI using the trapz function to approximate the integral
+    % Calculate OSI using the trapz function to approximate the integral
     top=abs(trapz(t,TAWSS_X+TAWSS_Y+TAWSS_Z));
     bot=TAWSS(jj);
     OSI(jj)=(1/tend)*0.5*(1-top/bot);
