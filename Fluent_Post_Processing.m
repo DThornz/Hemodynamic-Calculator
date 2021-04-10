@@ -2,7 +2,7 @@
     Asad Mirza
     PhD Candidate, Florida International University
     CV-PEUTICS Laboratory, https://cvpeutics.fiu.edu/
-    4/01/2021
+    4/10/2021
     
     Code to import Fluent ASCII data and calculate TAWSS, OSI, RRT, and transWSS.
     
@@ -111,14 +111,22 @@ for ii=1:num_files
         continue
     end
 end
+
+%% Extract Position Data
+% Assuming locations are in m, multiple by 1000 to convert to mm
+X=1000*data(:,2,1);
+Y=1000*data(:,3,1);
+Z=1000*data(:,4,1);
+
 %% Calculate TAWSS and OSI
 % Pre-allocate variables
 TAWSS=zeros(node_num,1);
 OSI=zeros(node_num,1);
-TAWSS_Mag=zeros(num_files,1);
-TAWSS_X=zeros(num_files,1);
-TAWSS_Y=zeros(num_files,1);
-TAWSS_Z=zeros(num_files,1);
+RRT=zeros(node_num,1);
+WSS_Mag=zeros(num_files,1);
+WSS_X=zeros(num_files,1);
+WSS_Y=zeros(num_files,1);
+WSS_Z=zeros(num_files,1);
 
 t=tstart+dt:dt:tend; % Create vector of time data
 
@@ -138,10 +146,10 @@ for jj=1:node_num % All nodes
             
             % Add values to separate variable for later, each position is a
             % different point in time.
-            TAWSS_Mag(time_point_counter)=TAWSS_Mag_temp;
-            TAWSS_X(time_point_counter)=TAWSS_X_temp;
-            TAWSS_Y(time_point_counter)=TAWSS_Y_temp;
-            TAWSS_Z(time_point_counter)=TAWSS_Z_temp;
+            WSS_Mag(time_point_counter)=TAWSS_Mag_temp;
+            WSS_X(time_point_counter)=TAWSS_X_temp;
+            WSS_Y(time_point_counter)=TAWSS_Y_temp;
+            WSS_Z(time_point_counter)=TAWSS_Z_temp;
             
             % Add 1 to the counter, increasing for each time step
             time_point_counter=time_point_counter+1;
@@ -152,33 +160,33 @@ for jj=1:node_num % All nodes
         
     end
     % Calculate TAWSS using the trapz function to approximate the integral
-    TAWSS(jj)=(1/Tc)*trapz(t,TAWSS_Mag);
+    TAWSS(jj)=(1/Tc)*trapz(t,WSS_Mag);
     % Calculate OSI using the trapz function to approximate the integral
-    top=abs(trapz(t,TAWSS_X+TAWSS_Y+TAWSS_Z));
+    top=abs(trapz(t,WSS_X+WSS_Y+WSS_Z));
     bot=TAWSS(jj);
     OSI(jj)=(1/tend)*0.5*(1-top/bot);
-    
-    % Reset the TAWSS parsed variables for next node
-    TAWSS_Mag=zeros(num_files,1);
-    TAWSS_X=zeros(num_files,1);
-    TAWSS_Y=zeros(num_files,1);
-    TAWSS_Z=zeros(num_files,1);
+    % Calculate RRT using TAWSS and OSI
+    RRT(jj)=1/(TAWSS(jj)*(1-2*OSI(jj)));
+    % Reset the WSS parsed variables for next node
+    WSS_Mag=zeros(num_files,1);
+    WSS_X=zeros(num_files,1);
+    WSS_Y=zeros(num_files,1);
+    WSS_Z=zeros(num_files,1);
     
     % Reset counter for next node
     time_point_counter=1;
 end
+%% Subplot Parameter
+subplot_counter=1;
 %% Plotting TAWSS
-% Assuming locations are in m, multiple by 1000 to convert to mm
-X=1000*data(:,2,1);
-Y=1000*data(:,3,1);
-Z=1000*data(:,4,1);
 % Assuming TAWSS is in Pa, multiple by 10 to convert to dynes/cm^2
 C=TAWSS*10;
 
 if TAWSS_plot
     % Plot using scatter3
     if length(indx)>1
-        subplot(1,length(indx),1)
+        subplot(1,length(indx),subplot_counter)
+        subplot_counter=subplot_counter+1;
     end
     scatter3(X,Y,Z,20,C,'filled')
     colormap(jet(1024));
@@ -208,17 +216,12 @@ if TAWSS_plot
 end
 
 %% Plotting OSI
-% X Y and Z position data
-% Assuming locations are in m, multiple by 1000 to convert to mm
-X=1000*data(:,2,1);
-Y=1000*data(:,3,1);
-Z=1000*data(:,4,1);
 C=OSI;
-
 if OSI_plot
     % Plot using scatter3
     if length(indx)>1
-        subplot(1,length(indx),2)
+        subplot(1,length(indx),subplot_counter)
+        subplot_counter=subplot_counter+1;
     end
     scatter3(X,Y,Z,20,C,'filled')
     
@@ -229,6 +232,55 @@ if OSI_plot
     cb.FontWeight='bold';
     cb.FontSize=15;
     caxis([0 0.5])
+    
+    xlabel('X (mm)');
+    ylabel('Y (mm)');
+    zlabel('Z (mm)');
+    grid off
+    
+    a=gca;
+    a.FontWeight='bold';
+    a.FontSize=15;
+    a.Color='none';
+    a.XColor='w';
+    a.YColor='w';
+    a.ZColor='w';
+    
+    g=gcf;
+    g.Color='k';
+    axis equal
+end
+
+%% Plotting RRT
+% Find if RRT has outliers due to very distrubed/stationary flow
+RRT_Outlier_Found= sum(isoutlier(RRT,'mean'));
+% If found log the data for better visuals, otherwise leave as normal units
+% of (1/Pa)
+if RRT_Outlier_Found>0
+    C=log(RRT);
+else
+    C=RRT;
+end
+
+if RRT_plot
+    % Plot using scatter3
+    if length(indx)>1
+        subplot(1,length(indx),subplot_counter)
+        subplot_counter=subplot_counter+1;
+    end
+    scatter3(X,Y,Z,20,C,'filled')
+    
+    colormap(jet(1024));
+    cb=colorbar;
+    cb.Color='w';
+    if RRT_Outlier_Found>0
+        cb.Label.String='log(RRT (1/Pa))';
+    else
+        cb.Label.String='RRT (1/Pa)';
+    end
+    cb.FontWeight='bold';
+    cb.FontSize=15;
+    caxis([min(C) max(C)])
     
     xlabel('X (mm)');
     ylabel('Y (mm)');
