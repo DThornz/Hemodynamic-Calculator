@@ -19,7 +19,7 @@ Transverse WSS (transWSS) is similar to TAWSS but rather than being constrained 
 
 ## What does this code do?
 
-It processes Fluent exported ASCII data for Wall Shear Stress and XYZ Wall Shear Stresses and then reports back the TAWSS and OSI along with a plot of the surface.
+It processes Fluent exported ASCII data for Wall Shear Stress and XYZ Wall Shear Stresses and then reports back the parameters along with a plot of the surface.
 
 Example data and a PowerPoint detailing how to use the script is provided as a reference.
 
