@@ -89,7 +89,7 @@ end
 num_files=length(selected_files);
 % Do a check if the length of the time vector matches the number of files
 if tend/dt~=num_files
-    error('Number of time steps doesn''t match number of files. Check again.\n')
+    error('Number of time steps doesn''t match number of files. Check again.')
 end
 % Separate counter for loop later
 time_point_counter=1;
@@ -117,12 +117,20 @@ end
 X=1000*data(:,2,1);
 Y=1000*data(:,3,1);
 Z=1000*data(:,4,1);
-
+% Try calculating normals using MATLAB computer vision toolbox, otherwise
+% use 3rd party script.
+try
+    ptCloud=pointCloud([X,Y,Z]);
+    normals=pcnormals(ptCloud,6);
+catch
+    [normals,~]=findPointNormals([X,Y,Z],6);
+end
 %% Calculate TAWSS and OSI
 % Pre-allocate variables
 TAWSS=zeros(node_num,1);
 OSI=zeros(node_num,1);
 RRT=zeros(node_num,1);
+transWSS=zeros(node_num,1);
 WSS_Mag=zeros(num_files,1);
 WSS_X=zeros(num_files,1);
 WSS_Y=zeros(num_files,1);
@@ -139,17 +147,17 @@ for jj=1:node_num % All nodes
     for ii=1:num_files % All timesteps
         try
             % Grab the variable values temporarily
-            TAWSS_Mag_temp=data(jj,5,ii);
-            TAWSS_X_temp=data(jj,6,ii);
-            TAWSS_Y_temp=data(jj,7,ii);
-            TAWSS_Z_temp=data(jj,8,ii);
+            WSS_Mag_temp=data(jj,5,ii);
+            WSS_X_temp=data(jj,6,ii);
+            WSS_Y_temp=data(jj,7,ii);
+            WSS_Z_temp=data(jj,8,ii);
             
             % Add values to separate variable for later, each position is a
             % different point in time.
-            WSS_Mag(time_point_counter)=TAWSS_Mag_temp;
-            WSS_X(time_point_counter)=TAWSS_X_temp;
-            WSS_Y(time_point_counter)=TAWSS_Y_temp;
-            WSS_Z(time_point_counter)=TAWSS_Z_temp;
+            WSS_Mag(time_point_counter)=WSS_Mag_temp;
+            WSS_X(time_point_counter)=WSS_X_temp;
+            WSS_Y(time_point_counter)=WSS_Y_temp;
+            WSS_Z(time_point_counter)=WSS_Z_temp;
             
             % Add 1 to the counter, increasing for each time step
             time_point_counter=time_point_counter+1;
@@ -164,9 +172,15 @@ for jj=1:node_num % All nodes
     % Calculate OSI using the trapz function to approximate the integral
     top=abs(trapz(t,WSS_X+WSS_Y+WSS_Z));
     bot=TAWSS(jj);
-    OSI(jj)=(1/tend)*0.5*(1-top/bot);
+    OSI(jj)=0.5*(1-top/bot);
     % Calculate RRT using TAWSS and OSI
     RRT(jj)=1/(TAWSS(jj)*(1-2*OSI(jj)));
+    % Calculate transWSS
+    top=[trapz(t,WSS_X),trapz(t,WSS_Y),trapz(t,WSS_Z)]';
+    bot=abs(trapz(t,WSS_X+WSS_Y+WSS_Z));
+    inner=cross(normals(jj,:),top/bot);
+    outer=dot([WSS_X,WSS_Y,WSS_Z],ones(num_files,3).*inner);
+    transWSS(jj)=(1/Tc)*trapz(abs(outer));
     % Reset the WSS parsed variables for next node
     WSS_Mag=zeros(num_files,1);
     WSS_X=zeros(num_files,1);
@@ -176,8 +190,10 @@ for jj=1:node_num % All nodes
     % Reset counter for next node
     time_point_counter=1;
 end
+
 %% Subplot Parameter
 subplot_counter=1;
+
 %% Plotting TAWSS
 % Assuming TAWSS is in Pa, multiple by 10 to convert to dynes/cm^2
 C=TAWSS*10;
@@ -277,6 +293,55 @@ if RRT_plot
         cb.Label.String='log(RRT (1/Pa))';
     else
         cb.Label.String='RRT (1/Pa)';
+    end
+    cb.FontWeight='bold';
+    cb.FontSize=15;
+    caxis([min(C) max(C)])
+    
+    xlabel('X (mm)');
+    ylabel('Y (mm)');
+    zlabel('Z (mm)');
+    grid off
+    
+    a=gca;
+    a.FontWeight='bold';
+    a.FontSize=15;
+    a.Color='none';
+    a.XColor='w';
+    a.YColor='w';
+    a.ZColor='w';
+    
+    g=gcf;
+    g.Color='k';
+    axis equal
+end
+
+%% Plotting transWSS
+% Find if transWSS has outliers due to very distrubed/stationary flow
+transWSS_Outlier_Found= sum(isoutlier(transWSS,'mean'));
+% If found log the data for better visuals, otherwise leave as normal units
+% of (dynes/cm^2)
+if transWSS_Outlier_Found>0
+    C=log(10*RRT);
+else
+    C=transWSS*10;
+end
+
+if transWSS_plot
+    % Plot using scatter3
+    if length(indx)>1
+        subplot(1,length(indx),subplot_counter)
+        subplot_counter=subplot_counter+1;
+    end
+    scatter3(X,Y,Z,20,C,'filled')
+    
+    colormap(jet(1024));
+    cb=colorbar;
+    cb.Color='w';
+    if transWSS_Outlier_Found>0
+        cb.Label.String='log(transWSS (dynes/cm^{2}))';
+    else
+        cb.Label.String='transWSS (dynes/cm^{2})';
     end
     cb.FontWeight='bold';
     cb.FontSize=15;
