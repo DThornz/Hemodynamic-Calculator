@@ -35,6 +35,14 @@ For each time step the code  iterates across all nodes and does a temporal integ
 
 <a href="url"><img src="https://github.com/DThornz/Hemodynamic-Calculator/blob/main/OSI_Eq.jpg" align="center" height="171" width="659" ></a>
 
+### RRT
+
+<a href="url"><img src="https://github.com/DThornz/Hemodynamic-Calculator/blob/main/RRT_Eq.jpg" align="center" height="145" width="648" ></a>
+
+### transWSS
+
+<a href="url"><img src="https://github.com/DThornz/Hemodynamic-Calculator/blob/main/transWSS_Eq.jpg" align="center" height="227" width="1120" ></a>
+
 
 [Feel free to fork this on GitHub](https://github.com/DThornz/Hemodynamic-Calculator/fork)
 
