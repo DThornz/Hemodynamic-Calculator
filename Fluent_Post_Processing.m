@@ -41,7 +41,7 @@ Tc=str2double(answer{4}); % Cycle period used in simulation, in seconds
 % Set plotting parameters
 list = {'TAWSS','OSI','RRT',...                   
 'transWSS'};
-[indx,tf] = listdlg('Name','Plotting Parameters','PromptString',{'What would you like to plot?','Hold CTRL/Command for multi-select'},'ListString',list,'ListSize',[200 100]);
+[indx,tf] = listdlg('Name','Plotting Parameters','PromptString',{'What would you like to plot?','Hold CTRL/Command for multi-select'},'ListString',list,'ListSize',[250 80]);
 % Handle responses
 TAWSS_plot=false;
 OSI_plot=false;
@@ -322,7 +322,7 @@ transWSS_Outlier_Found= sum(isoutlier(transWSS,'mean'));
 % If found log the data for better visuals, otherwise leave as normal units
 % of (dynes/cm^2)
 if transWSS_Outlier_Found>0
-    C=log(10*RRT);
+    C=log(10*transWSS);
 else
     C=transWSS*10;
 end
