@@ -88,7 +88,7 @@ end
 % Number of files selected
 num_files=length(selected_files);
 % Do a check if the length of the time vector matches the number of files
-if tend/dt~=num_files
+if int16(tend/dt)~=int16(num_files)
     error('Number of time steps doesn''t match number of files. Check again.')
 end
 % Separate counter for loop later
@@ -197,6 +197,7 @@ subplot_counter=1;
 %% Plotting TAWSS
 % Assuming TAWSS is in Pa, multiple by 10 to convert to dynes/cm^2
 C=TAWSS*10;
+% C2=remap(C,[min(C) max(C)],[0 5]);
 
 if TAWSS_plot
     % Plot using scatter3
@@ -204,14 +205,15 @@ if TAWSS_plot
         subplot(1,length(indx),subplot_counter)
         subplot_counter=subplot_counter+1;
     end
-    scatter3(X,Y,Z,20,C,'filled')
+    scatter3(X,Y,Z,20,C - 4,'filled')
     colormap(jet(1024));
     cb=colorbar;
     cb.Color='w';
     cb.Label.String='TAWSS (dynes/cm^{2})';
     cb.FontWeight='bold';
     cb.FontSize=15;
-    caxis([min(C) max(C)])
+    caxis([0 10])
+%     caxis([min(C) 5])
     
     xlabel('X (mm)');
     ylabel('Y (mm)');
@@ -229,6 +231,7 @@ if TAWSS_plot
     g=gcf;
     g.Color='k';
     axis equal
+    view(90,0)
 end
 
 %% Plotting OSI
@@ -239,7 +242,7 @@ if OSI_plot
         subplot(1,length(indx),subplot_counter)
         subplot_counter=subplot_counter+1;
     end
-    scatter3(X,Y,Z,20,C,'filled')
+    scatter3(X,Y,Z,20,C+.05,'filled')
     
     colormap(jet(1024));
     cb=colorbar;
@@ -248,6 +251,7 @@ if OSI_plot
     cb.FontWeight='bold';
     cb.FontSize=15;
     caxis([0 0.5])
+% caxis([0.15 0.25])
     
     xlabel('X (mm)');
     ylabel('Y (mm)');
